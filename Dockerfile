@@ -1,24 +1,21 @@
-# Use Python 3.11 slim image
 FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
-# Copy requirements first (for caching)
-COPY requirements.txt .
+# Install Ollama
+RUN apt-get update && apt-get install -y curl && \
+    curl -fsSL https://ollama.com/install.sh | sh
 
-# Install dependencies
+# Copy requirements and install
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all project files
+# Copy all files
 COPY . .
 
-# Expose port 8005
-EXPOSE 8005
+# Expose port 7860 (Hugging Face default)
+EXPOSE 7860
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-
-# Run the application
-CMD ["python", "llm_server.py"]
+# Start Ollama in background and run app
+CMD ollama serve & sleep 5 && ollama pull llama3.2 && python app.py
 
