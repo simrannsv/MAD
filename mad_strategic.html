@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAD - Strategic Council</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #F8FAFB;
+            --bg-secondary: #FFFFFF;
+            --bg-tertiary: #F3F4F6;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --text-tertiary: #9CA3AF;
+            --border: #E5E7EB;
+            --accent-green: #10B981;
+            --accent-blue: #3B82F6;
+            --accent-purple: #8B5CF6;
+            --accent-orange: #F59E0B;
+            --accent-red: #EF4444;
+            --shadow: rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .agents-list {
+            padding: 1rem;
+        }
+
+        .agent-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .agent-item:hover {
+            background: #E0F2FE;
+        }
+
+        .agent-item.active {
+            background: #DBEAFE;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .agent-icon-wrapper {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .agent-info {
+            flex: 1;
+        }
+
+        .agent-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .agent-role {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .agent-metric {
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .breadcrumb {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .control-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--accent-blue);
+        }
+
+        .control-btn.primary {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        /* Debate Area */
+        .debate-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 0;
+            overflow: hidden;
+        }
+
+        .debate-main {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        .debate-header {
+            background: linear-gradient(135deg, #E0E7FF 0%, #F3F4F6 100%);
+            padding: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .debate-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .debate-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .message-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px var(--shadow);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .message-info {
+            flex: 1;
+        }
+
+        .message-author {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .message-badge {
+            font-size: 0.75rem;
+            color: var(--accent-green);
+            font-weight: 500;
+        }
+
+        .message-content {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .message-meta {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Input Area */
+        .input-area {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 1.5rem;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .input-field {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            resize: none;
+            min-height: 80px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .submit-btn {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0 2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .submit-btn:hover {
+            background: #2563EB;
+        }
+
+        .submit-btn:disabled {
+            background: var(--text-tertiary);
+            cursor: not-allowed;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            overflow-y: auto;
+        }
+
+        .panel-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .panel-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 250px;
+        }
+
+        .tension-list {
+            margin-top: 1rem;
+        }
+
+        .tension-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            font-size: 0.875rem;
+        }
+
+        /* Synthesizer Panel */
+        .synthesizer-panel {
+            background: #F9FAFB;
+            border-top: 3px solid var(--accent-purple);
+        }
+
+        .synthesizer-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .synthesizer-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-purple);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .consensus-bar {
+            background: var(--bg-tertiary);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .consensus-fill {
+            height: 100%;
+            background: var(--accent-purple);
+            transition: width 0.5s ease;
+        }
+
+        .summary-section {
+            margin: 1.5rem 0;
+        }
+
+        .summary-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .summary-list {
+            list-style: none;
+        }
+
+        .summary-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .summary-item.advantage {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .summary-item.concern {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .summary-item-number {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 4px;
+            text-align: center;
+            line-height: 20px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+        }
+
+        /* Loading */
+        .loading-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .debate-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .right-panel {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const AGENTS = {
+            'Finance': { icon: '💰', color: '#10B981', role: 'Financial Analyst', metric: '$2.4M' },
+            'Market': { icon: '📊', color: '#3B82F6', role: 'Market Analysis', metric: '87%' },
+            'Innovator': { icon: '💡', color: '#F59E0B', role: 'Innovation Lead', metric: '9.2/10' },
+            'Risk Manager': { icon: '⚠️', color: '#EF4444', role: 'Risk Assessment', metric: '76%' },
+            'Devils Advocate': { icon: '😈', color: '#8B5CF6', role: 'Critical Analysis', metric: '8/10' },
+            'Operator': { icon: '⚙️', color: '#6366F1', role: 'Operations Manager', metric: '76%' }
+        };
+
+        function App() {
+            const [serverStatus, setServerStatus] = useState('checking');
+            const [prompt, setPrompt] = useState('');
+            const [isDebating, setIsDebating] = useState(false);
+            const [messages, setMessages] = useState([]);
+            const [verdict, setVerdict] = useState(null);
+            const [selectedAgent, setSelectedAgent] = useState('Finance');
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+
+            useEffect(() => {
+                checkServer();
+                const interval = setInterval(checkServer, 10000);
+                return () => clearInterval(interval);
+            }, []);
+
+            useEffect(() => {
+                if (messages.length > 0 && chartRef.current && !chartInstance.current) {
+                    createRadarChart();
+                }
+            }, [messages]);
+
+            const checkServer = async () => {
+                try {
+                    const response = await fetch('http://localhost:8003/health');
+                    setServerStatus(response.ok ? 'online' : 'offline');
+                } catch {
+                    setServerStatus('offline');
+                }
+            };
+
+            const createRadarChart = () => {
+                const ctx = chartRef.current.getContext('2d');
+                
+                if (chartInstance.current) {
+                    chartInstance.current.destroy();
+                }
+
+                chartInstance.current = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Innovation', 'Risk', 'Finance', 'Operations', 'Market', 'Consensus'],
+                        datasets: [{
+                            label: 'Tension Map',
+                            data: [92, 76, 85, 76, 87, 68],
+                            fill: true,
+                            backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                            borderColor: 'rgb(139, 92, 246)',
+                            pointBackgroundColor: 'rgb(139, 92, 246)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgb(139, 92, 246)'
+                        }]
+                    },
+                    options: {
+                        elements: {
+                            line: {
+                                borderWidth: 2
+                            }
+                        },
+                        scales: {
+                            r: {
+                                angleLines: {
+                                    display: true
+                                },
+                                suggestedMin: 0,
+                                suggestedMax: 100
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            };
+
+            const startDebate = async () => {
+                if (!prompt.trim()) return;
+
+                setIsDebating(true);
+                setMessages([]);
+                setVerdict(null);
+
+                try {
+                    const response = await fetch('http://localhost:8003/debate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt })
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        setMessages(result.agent_responses);
+                        setVerdict(result.final_verdict);
+                    }
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                }
+
+                setIsDebating(false);
+            };
+
+            return (
+                <div className="app-container">
+                    {/* Sidebar */}
+                    <div className="sidebar">
+                        <div className="sidebar-header">
+                            <div className="sidebar-title">Strategic Council</div>
+                            <div className="sidebar-subtitle">7 Specialized Agents</div>
+                        </div>
+                        <div className="agents-list">
+                            {Object.entries(AGENTS).map(([name, config]) => (
+                                <div
+                                    key={name}
+                                    className={`agent-item ${selectedAgent === name ? 'active' : ''}`}
+                                    onClick={() => setSelectedAgent(name)}
+                                >
+                                    <div className="agent-icon-wrapper" style={{ background: config.color + '20' }}>
+                                        {config.icon}
+                                    </div>
+                                    <div className="agent-info">
+                                        <div className="agent-name">{name}</div>
+                                        <div className="agent-role">{config.role}</div>
+                                    </div>
+                                    <div className="agent-metric" style={{ color: config.color }}>
+                                        {config.metric}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="main-content">
+                        {/* Top Bar */}
+                        <div className="top-bar">
+                            <div className="top-bar-left">
+                                <span className="breadcrumb">Strategic Council Interface</span>
+                            </div>
+                            <div className="controls">
+                                <button className="control-btn primary" onClick={startDebate} disabled={isDebating || serverStatus !== 'online'}>
+                                    <span>▶</span> {isDebating ? 'Running...' : 'Start Debate'}
+                                </button>
+                                <button className="control-btn">
+                                    <span>📊</span> Call for Vote
+                                </button>
+                                <button className="control-btn">
+                                    <span>🔄</span> Pivot Strategy
+                                </button>
+                                <button className="control-btn">
+                                    <span>⚠️</span> Focus on Risk
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Debate Container */}
+                        <div className="debate-container">
+                            <div className="debate-main">
+                                {!messages.length && !isDebating ? (
+                                    <>
+                                        <div className="debate-header">
+                                            <div className="debate-title">Debate: New Strategic Initiative</div>
+                                            <div className="debate-subtitle">Enter your strategic question below</div>
+                                        </div>
+                                        <div className="input-area">
+                                            <div className="input-wrapper">
+                                                <textarea
+                                                    className="input-field"
+                                                    value={prompt}
+                                                    onChange={(e) => setPrompt(e.target.value)}
+                                                    placeholder="Enter your strategic question or decision...
+
+Example: Should we invest $10M in an AI-driven personalization platform for Q4?"
+                                                    disabled={isDebating}
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="debate-header">
+                                            <div className="debate-title">Debate: {prompt.slice(0, 60)}...</div>
+                                            <div className="debate-subtitle">Live council discussion</div>
+                                        </div>
+                                        <div className="messages-area">
+                                            {messages.map((msg, idx) => {
+                                                const agent = AGENTS[msg.agent];
+                                                return (
+                                                    <div key={idx} className="message-card">
+                                                        <div className="message-header">
+                                                            <div className="message-avatar" style={{ background: agent?.color }}>
+                                                                {msg.agent.charAt(0)}
+                                                            </div>
+                                                            <div className="message-info">
+                                                                <div className="message-author">{msg.agent}</div>
+                                                                <div className="message-badge">✓ Analysis Complete</div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="message-content">{msg.response}</div>
+                                                        <div className="message-meta">
+                                                            <span>Message #{idx + 1}</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                            {isDebating && (
+                                                <div className="loading-state">
+                                                    <div className="spinner"></div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Right Panel */}
+                            <div className="right-panel">
+                                <div className="panel-section">
+                                    <div className="panel-title">Tension Map</div>
+                                    <div className="panel-subtitle">Real-time debate dynamics</div>
+                                    <div className="chart-container">
+                                        <canvas ref={chartRef}></canvas>
+                                    </div>
+                                    <div className="tension-list">
+                                        <div className="tension-item">
+                                            <span>Innovation vs Risk</span>
+                                            <strong>High</strong>
+                                        </div>
+                                        <div className="tension-item">
+                                            <span>Finance vs Operations</span>
+                                            <strong>Medium</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {verdict && (
+                                    <div className="panel-section synthesizer-panel">
+                                        <div className="synthesizer-header">
+                                            <div className="synthesizer-icon">⚖️</div>
+                                            <div>
+                                                <div className="panel-title" style={{ marginBottom: 0 }}>The Synthesizer</div>
+                                                <div className="panel-subtitle" style={{ marginBottom: 0 }}>Executive Summary & Consensus Analysis</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="summary-section">
+                                            <div className="summary-title">Executive Summary</div>
+                                            <div style={{ fontSize: '0.875rem', lineHeight: '1.6', color: 'var(--text-secondary)' }}>
+                                                {verdict.response.slice(0, 200)}...
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Consensus Level</span>
+                                                <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-purple)' }}>68%</span>
+                                            </div>
+                                            <div className="consensus-bar">
+                                                <div className="consensus-fill" style={{ width: '68%' }}></div>
+                                            </div>
+                                        </div>
+
+                                        <div className="summary-section">
+                                            <div className="summary-title" style={{ color: 'var(--accent-green)' }}>
+                                                ✓ Strategic Advantages
+                                            </div>
+                                            <ul className="summary-list">
+                                                <li className="summary-item advantage">
+                                                    <span className="summary-item-number">1</span>
+                                                    Strong market demand with 87% fit
+                                                </li>
+                                                <li className="summary-item advantage">
+                                                    <span className="summary-item-number">2</span>
+                                                    First-mover advantage opportunity
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                        <div className="summary-section">
+                                            <div className="summary-title" style={{ color: 'var(--accent-red)' }}>
+                                                × Critical Concerns
+                                            </div>
+                                            <ul className="summary-list">
+                                                <li className="summary-item concern">
+                                                    <span className="summary-item-number">1</span>
+                                                    Infrastructure scalability gaps
+                                                </li>
+                                                <li className="summary-item concern">
+                                                    <span className="summary-item-number">2</span>
+                                                    Team at 85% capacity
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
